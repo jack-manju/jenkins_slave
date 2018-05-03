@@ -1,0 +1,33 @@
+FROM ubuntu:16.04
+MAINTAINER Gaurav Parmar
+
+RUN apt-get update -qqy \
+  && apt-get -qqy --no-install-recommends install software-properties-common \
+  && apt-get install -y sudo \
+  && add-apt-repository -y ppa:git-core/ppa
+
+
+RUN apt-get update -qqy \
+  && apt-get -qqy --no-install-recommends install \
+    iproute \
+    openssh-client ssh-askpass\
+    ca-certificates \
+    openjdk-8-jdk \
+    tar zip unzip \
+    wget curl \
+    git \
+    build-essential \
+  && rm -rf /var/lib/apt/lists/* \
+  && sed -i 's/securerandom\.source=file:\/dev\/random/securerandom\.source=file:\/dev\/urandom/' ./usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/java.security
+
+RUN [ -f "/etc/ssl/certs/java/cacerts" ] || /var/lib/dpkg/info/ca-certificates-java.postinst configure
+
+
+RUN useradd jenkins --shell /bin/bash --create-home \
+  && usermod -a -G sudo jenkins \
+  && echo 'ALL ALL = (ALL) NOPASSWD: ALL' >> /etc/sudoers \
+  && echo 'jenkins:secret' | chpasswd
+
+RUN echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+USER jenkins
